@@ -1,0 +1,28 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 9:
+
+% Goldens was mainly a meat restaurant. 
+% The waiter put down the fish. 
+% Father orders lanb_chops.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(goldens).
+customer(father).
+food(fish).
+food(lamb_chops).
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..1).
+
+st_hpd(put_down(w, fish, t), true, 0).
+st_hpd(order(father, lamb_chops, w), true, 1).

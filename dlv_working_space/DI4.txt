@@ -1,0 +1,18 @@
+restaurant(r).
+
+customer(john).
+food(steak).
+waiter(w).
+drink(wine).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..4).
+
+
+st_hpd(greet(w, john), true, 0).
+st_hpd(order_drink(john, wine, w), true, 1).
+st_hpd(order(john, steak, w), true, 2).
+st_hpd(pay(john, b), true, 3).
+st_hpd(leave(john), true, 4).

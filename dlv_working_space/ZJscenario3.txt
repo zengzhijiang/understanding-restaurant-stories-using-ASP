@@ -1,0 +1,51 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 3
+%
+% Brand sat in a chair of farthest table.
+% Brand picks up the menu and read.
+% Brand orders whiskey and pepsi to start.
+% Brand orders pyrogies_and_sausage.
+% Waiter places the dish on table.
+% Brand enjoys the meal.
+% Brand asks for soup that served.
+% Waiter places soup on the table.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(r).
+customer(brand).
+
+food(f).
+member(whiskey, f).
+member(pepsi, f).
+member(pyrogies_and_sausage, f).
+member(soup, f).
+
+%orders' sequence problem
+%food(whiskey).
+%foot(pepsi).
+%food(pyrogies_and_sausage).
+%food(soup).
+
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..6).
+
+st_hpd(sit(brand), true, 0).
+st_hpd(menu_read(brand), true, 1).
+st_hpd(order(brand, whiskey, w), true, 2).
+st_hpd(order(brand, pepsi, w), true, 2).
+st_hpd(order(brand, pyrogies_and_sausage, w), true, 2).
+st_hpd(put_down(w, pyrogies_and_sausage, t), true, 3).
+st_hpd(eat(brand, pyrogies_and_sausage), true, 4).
+st_hpd(order(brand, soup, w), true, 5).
+st_hpd(put_down(w, soup, t), true, 6).

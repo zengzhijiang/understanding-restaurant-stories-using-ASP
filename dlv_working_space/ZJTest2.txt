@@ -1,0 +1,24 @@
+restaurant(r).
+customer(sam).
+
+food(f).
+member(lamb, f).
+member(pork, f).
+
+drink(apple_juice).
+
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..4).
+
+st_hpd(greet(w, sam), true, 0).
+st_hpd(order_drink(sam, apple_juice, w), true, 1).
+st_hpd(order(sam, f, w), true, 1).
+st_hpd(drink(sam, apple_juice), true, 2).
+st_hpd(eat(sam, f), true, 2).
+st_hpd(pay(sam,b), true, 3).
+st_hpd(leave(sam), true, 4).
+

@@ -1,0 +1,38 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 5:
+% 
+% Judy, Zoe, and Alex seated in a booth in a local restaurant .
+% Judy ordered fish_and_chips.
+% Alex ordered cheeseburger_and_fries
+% Zoe ordred grilled_cheese_and_salad
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(r).
+customer(them).
+person(judy).
+person(zoe).
+person(alex).
+member(judy, them).
+member(zoe, them).
+member(alex, them).
+food(f).
+member(fish_and_chips, f).
+member(cheeseburger_and_fries, f).
+member(grilled_cheese_and_salad, f).
+
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..1).
+
+st_hpd(sit(them), true, 0).
+st_hpd(order(them, f, w), true, 1).

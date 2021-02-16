@@ -1,0 +1,43 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 2:
+%
+% Waiter took them to a booth in the back coner.
+% The waiter put two copy of menu on the table.
+% amandine orders wonton, lobster_shrimp, and bp_friedrice.
+% gavin orders the same.
+% Waiter places oolong_tea in the center of the table and leaves.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(r).
+
+person(ama).
+person(gav).
+customer(them).
+member(ama, them).
+member(gav, them).
+
+food(f).
+member(wonton, f).
+member(lobster_shrimp, f).
+member(bp_friedrice, f).
+member(oolong_tea, f).
+waiter(waitress).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..1).
+
+st_hpd(sit(them), true, 0).
+st_hpd(order(them, f, waitress), true, 1).
+%st_hpd(put_down(waitress, oolong_tea, t), true, 2).
+
+
+

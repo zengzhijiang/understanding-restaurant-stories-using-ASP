@@ -1,0 +1,16 @@
+dlv kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt diag.txt -nofinitecheck -pfilter=occurs | mkatoms | python sort.py
+dlv kb.txt LFscenario2serendipity.txt m_newTI_woDiag.txt conn.txt diag.txt -nofinitecheck -pfilter=occurs | mkatoms | python sort.py
+dlv kb.txt LFscenario3futile.txt m_newTI_woDiag.txt conn.txt diag.txt -nofinitecheck -pfilter=occurs | mkatoms | python sort.py
+dlv kb.txt LFscenario4diagnosis.txt m_newTI_woDiag.txt conn.txt diag.txt -nofinitecheck -pfilter=occurs | mkatoms | python sort.py
+
+dlv kb.txt LFnew1ex.txt m_newTI_woDiag.txt conn.txt diag.txt -nofinitecheck -pfilter=occurs | mkatoms  | python sort.py
+
+
+dlv kb.txt ZJscenario1.txt m_newTI_woDiag.txt conn.txt diag.txt -nofinitecheck -pfilter=o | mkatoms | python sort.py
+dlv kb.txt ZJscenario2.txt m_newTI_woDiag.txt conn.txt diag.txt -nofinitecheck -pfilter=o | mkatoms | python sort.py
+dlv kb.txt ZJscenario7.txt m_newTI_woDiag.txt conn.txt diag.txt -nofinitecheck -pfilter=occurs | mkatoms | python sort.py
+
+
+dlv kb.txt ZJscenario7ps.txt m_newTI_woDiag.txt conn.txt diag.txt -nofinitecheck -pfilter=occurs | mkatoms | python sort.py
+
+dlv kb_original.txt ZJscenario14.txt m_newTI_woDiag.txt conn.txt diag.txt -nofinitecheck -pfilter=occurs | mkatoms | python sort.py

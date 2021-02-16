@@ -1,0 +1,683 @@
+% ------------------------------------------------------------------
+% Note: Most of the contents of this file come from Blount et al.'s
+% theory of intentions and AIA reasoning module (their file RoomsWorld.txt).
+% ------------------------------------------------------------------
+
+% Note: This file does not contain the Diagnosis module and can thus
+% be run with clingo.
+
+bool(true).
+bool(false).
+	
+#const max_len = 33.     
+
+%#const n = 33.
+
+step(0..n).
+
+index(inactive).
+index(0..max_len).
+
+% Daniela
+next_index(K, K1) :- index(K), index(K1), K >=0, K1 = K+1.
+next_index(inactive, 0). 
+ 
+% fluents that hold either mental inertial, mental defined, physical inertial, or 
+% mental inertial.                                                                  
+is_fluent(X) :- fluent(inertial, X).
+is_fluent(X) :- fluent(defined, X).
+
+fluent(inertial, X) :- mental_inertial_fluent(X).
+fluent(inertial, X) :- physical_inertial_fluent(X).
+
+fluent(defined, X) :- mental_defined_fluent(X).
+fluent(defined, X) :- physical_defined_fluent(X).
+
+% actions for agent: physical agent, mental agent, 
+% actions for exogenous: physical exogenous or special exogenous
+%%% Daniela:  agent_action(Ag, X) -- X is an agent action of agent Ag
+agent_action(Ag, X) :- physical_agent_action(Ag, X).				     
+agent_action(Ag, X) :- mental_agent_action(Ag, X).
+
+%%% Daniela:  More special treatment of wait is necessary:
+action(Ag, wait(Ag)) :- person(Ag).
+actor(wait(Ag), Ag) :- person(Ag).
+agent_action(Ag, wait(Ag)) :- agent(Ag).
+
+%%% Daniela:  exogenous_action(Ag, X) -- X is an exogenous action for agent Ag
+exogenous_action(Ag, X) :- physical_exogenous_action(Ag, X).
+exogenous_action(Ag, X) :- special_exogenous_action(Ag, X).
+
+%%% Daniela:  action(Ag, X) -- agent Ag can perform action X (X is an action of agent Ag)
+action(Ag, X) :- agent_action(Ag, X).      
+action(Ag, X) :- exogenous_action(Ag, X).
+
+%%% Daniela:  In the kb and conn.txt file we will also have action(X) -- X is an action 
+
+%%%%%%%%%%%% 3. Theory of Intentions   %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%  Mental signature and axioms %%%%%%%%%%%%%%%%%% 
+
+%%% Daniela:  Agent Ag starts or stops its activity M
+mental_agent_action(Ag, start(Ag, M)) :- agent(Ag), activity(M), actor(M, Ag).
+mental_agent_action(Ag, stop(Ag, M)) :- agent(Ag), activity(M), actor(M, Ag).
+
+%%% Daniela:  Goal G of agent Ag is selected or abandoned
+%%% Daniela:  i.e., Agent Ag should select or abandon its goal G
+%%% Daniela:  possible_goal now has two parameters: Ag and G !!!
+%%% Daniela:  possible_goal(Ag, G) -- G is a possible goal for Ag
+special_exogenous_action(Ag, select(Ag, G)) :- agent(Ag), possible_goal(Ag, G).
+special_exogenous_action(Ag, abandon(Ag, G)) :- agent(Ag), possible_goal(Ag, G).
+
+%%% Daniela:  active_goal(Ag, G) -- the active goal of agent Ag is (not) G
+mental_inertial_fluent(active_goal(Ag, G)) :- agent(Ag), possible_goal(Ag, G).         
+   
+% Fluent active(M) indicates that the agent is currently intending to execute M.
+%%% Daniela:  active(ag, M) -- the active activity of agent G is (not) its activity M
+mental_defined_fluent(active(Ag, M)) :- agent(G), activity(M), actor(M, Ag).
+
+%%% Daniela:  status(Ag, M, K) -- the status of agent Ag's activity M is K
+mental_inertial_fluent(status(Ag, M, K)) :- agent(Ag), activity(M), index(K), actor(M, Ag).
+
+% The fluent holds when -1 < K <= L is the index of the component of activity
+% M that has most recently been executed; K = L+1 is used to indicate
+% that activity M is dormant. 
+% The fluent is a function of M. This is indicated by the rule
+-holds(status(Ag, M, K1), I) :- 
+	holds(status(Ag, M, K2), I), 
+	K1 != K2,
+	agent(Ag),
+	activity(M),
+	index(K1),
+	index(K2).
+
+% defines active in terms of status   
+holds(active(Ag, M), I) :- 
+	-holds(status(Ag, M, inactive), I),
+	agent(Ag),
+	activity(M).
+
+% Activities are moved into and out of the mental state of the agent 
+% by mental actions start and stop.
+% Action start which sets the value of status to 0, 
+% and action stop returns the activity to a status of -1.
+ 
+holds(status(Ag, M, 0), I1) :- 
+	occurs(start(Ag, M), I), 
+	agent(Ag),
+	activity(M),
+	next(I, I1).
+ 
+holds(status(Ag, M, inactive), I1) :- 
+	occurs(stop(Ag, M), I),
+	agent(Ag),
+	activity(M),
+	next(I, I1).
+
+% There are also natural executability conditions for these actions:
+% an agent can neither start an ongoing activity,
+% nor stop a dormant activity. 
+  
+impossible(start(Ag, M), I) :- 
+	holds(active(Ag, M), I),
+	agent(Ag),
+	activity(M).
+
+impossible(stop(Ag, M), I) :- 
+	-holds(active(Ag, M), I),
+	agent(Ag),
+	activity(M).
+	
+
+% When the agent executes a mental action, he cannot simultaneously 
+% execute a physical action or multiple mental agent actions
+ 
+impossible(PAA, I) :- 
+	occurs(MAA, I),
+	mental_agent_action(Ag, MAA),
+	physical_agent_action(Ag, PAA).
+
+impossible(MAA, I) :- 
+	occurs(PAA, I),
+	physical_agent_action(Ag, PAA),
+	mental_agent_action(Ag, MAA).
+
+impossible(MAA1, I) :- 
+	occurs(MAA2, I), 
+	MAA1 != MAA2,
+	mental_agent_action(Ag, MAA1),
+	mental_agent_action(Ag, MAA2).
+	
+impossible(MAA2, I) :- 
+	occurs(MAA1, I), 
+	MAA2 != MAA1,
+	mental_agent_action(Ag, MAA1),
+	mental_agent_action(Ag, MAA2).
+ 
+% Agent action wait cannot occur with physical/mental action.
+%%% Daniela:  More special treatment of wait
+impossible(PAA, I) :- 
+	occurs(wait(Ag), I),
+	agent(Ag),
+	physical_agent_action(Ag, PAA).
+
+impossible(wait(Ag), I) :- 
+	occurs(PAA, I),
+	agent(Ag),
+	physical_agent_action(Ag, PAA).
+
+impossible(MAA, I) :- 
+	occurs(wait(Ag), I),
+	agent(Ag),
+	mental_agent_action(Ag, MAA).
+	
+impossible(wait(Ag), I) :- 
+	occurs(MAA, I),
+	agent(Ag),
+	mental_agent_action(Ag, MAA).
+
+
+% An activity M1 that is the current component of an activity M is an
+% immediate child of it
+%%% Daniela:  I added an agent as a parameter and that we define this fluent only on activities of the same agent
+mental_defined_fluent(immediate_child(Ag, M1, M)) :- 
+	M1 != M,
+	activity(M),
+	activity(M1),
+	actor(M, Ag),
+	actor(M1, Ag).
+%%% Daniela:  Added parameter Ag for consistency with goal and for possible future elaborations
+%%% Daniela:  e.g., activities with multiple actors (collaborations)
+holds(immediate_child(Ag, M1, M), I) :- 
+	component(M, K1, M1), 
+	holds(status(Ag, M, K), I),
+	activity(M),
+	activity(M1),
+	actor(M, Ag),
+	actor(M1, Ag),
+	index(K),
+	next_index(K, K1).
+
+%%% Daniela:  Here, we need to add Ag as well because a different agent may have the same goals
+mental_defined_fluent(immediate_child_goal(Ag, G1, G)) :- 
+	agent(Ag),
+	possible_goal(Ag, G1),
+	possible_goal(Ag, G).
+
+holds(immediate_child_goal(Ag, G1, G), I) :- 
+	holds(immediate_child(Ag, M1, M), I),
+	goal(M, G),
+	goal(M1, G1),
+	activity(M),
+	activity(M1),
+	actor(M, Ag),
+	actor(M1, Ag),
+	possible_goal(Ag, G),
+	possible_goal(Ag, G1).
+	
+%%% Daniela:  I added the agent and that we define this fluent only on activities of the same agent
+mental_defined_fluent(descendant(Ag, M1, M)):- 
+	M1 != M,
+	activity(M),
+	activity(M1),
+	actor(M, Ag),
+	actor(M, Ag1).
+
+holds(descendant(Ag, M1, M), I) :- 
+	holds(immediate_child(Ag, M1, M), I),
+	agent(Ag),
+	activity(M),
+	activity(M1).
+
+holds(descendant(Ag, M2, M), I) :- 
+	holds(descendant(Ag, M1, M), I),
+	holds(descendant(Ag, M2, M1), I),
+	agent(Ag),
+	activity(M),
+	activity(M1),
+	activity(M2).
+								
+% An activity M1 that is an immediate child and its goal are said to
+% be minor.
+%%% Daniela:  For goals, I have to add that this is true/false for a particular Agent
+%%% Daniela:  I do the same for activities for consistency and for possible future
+%%% Daniela:  elaborations (see above)
+mental_defined_fluent(minor(Ag, M)) :- agent(Ag), activity(M), actor(M, Ag).
+mental_defined_fluent(minor(Ag, G)) :- agent(Ag), possible_goal(Ag, G).
+
+holds(minor(Ag, M1), I) :- 
+	holds(immediate_child(Ag, M1, M), I),
+	agent(Ag),
+	activity(M),
+	activity(M1).
+
+holds(minor(Ag, G1), I) :- 
+	holds(immediate_child_goal(Ag, G1, G), I),
+	agent(Ag),
+	possible_goal(Ag, G),
+	possible_goal(Ag, G1).
+      
+                         
+% Exogenous action select activates the goal and
+% Exogenous action abandon returns the goal to an inactive state.
+
+holds(active_goal(Ag, G), I1) :- 
+	occurs(select(Ag, G), I),
+	agent(Ag),
+	possible_goal(Ag, G),
+	step(I),
+	next(I, I1).
+
+-holds(active_goal(Ag, G), I1) :- 
+	occurs(abandon(Ag, G), I),
+	agent(Ag),
+	possible_goal(Ag, G),
+	step(I),
+	next(I, I1).
+
+% There are also two natural executability conditions. 
+% An active goal cannot be selected and an inactive goal cannot be abandoned.
+% To prevent micromanaging of our agent's activities, we do not allow
+% abandoning of minor goals.
+
+impossible(select(Ag, G), I) :- 
+	holds(active_goal(Ag, G), I),
+	agent(Ag),
+	possible_goal(Ag, G),
+	step(I).
+
+impossible(abandon(Ag, G), I) :- 
+	-holds(active_goal(Ag, G), I),
+	agent(Ag),
+	possible_goal(Ag, G),
+	step(I).
+
+impossible(abandon(Ag, G), I) :- 
+	holds(minor(Ag, G), I),
+	agent(Ag),
+	possible_goal(Ag, G),
+	step(I).
+
+% when special exog select and abandon occur, 
+% no physical exogenous or agent action can occur. 
+
+impossible(PEA, I) :- 
+	occurs(SEA, I), 
+	agent(Ag),
+	special_exogenous_action(Ag, SEA), 
+	physical_exogenous_action(Ag, PEA).
+
+impossible(SEA, I) :- 
+	occurs(PEA, I), 
+	agent(Ag),
+	physical_exogenous_action(Ag, PEA), 
+	special_exogenous_action(Ag, SEA).
+
+impossible(MAA, I) :- 
+	occurs(SEA, I), 
+	agent(Ag),
+	special_exogenous_action(Ag, SEA), 
+	mental_agent_action(Ag, MAA).
+
+impossible(SEA, I) :- 
+	occurs(MAA, I), 
+	agent(Ag),
+	mental_agent_action(Ag, MAA), 
+	special_exogenous_action(Ag, SEA).
+
+impossible(PAA, I) :- 
+	occurs(SEA, I), 
+	agent(Ag),
+	special_exogenous_action(Ag, SEA), 
+	physical_agent_action(Ag, PAA).
+
+impossible(SEA, I) :- 
+	occurs(PAA, I), 
+	agent(Ag),
+	physical_agent_action(Ag, PAA), 
+	special_exogenous_action(Ag, SEA).
+           
+% The active state of M's goal propagates to its current immediate subactivity M1
+% whose goal G1 is not yet achieved and whose execution is not finshed
+
+% goals of active activities that are achieved are no longer  active
+
+-holds(active_goal(Ag, G), I) :- 
+	-holds(minor(Ag, G),I),
+	holds(G,I),
+	possible_goal(Ag, G),
+	agent(Ag),
+	step(I).
+
+holds(active_goal(Ag, G1), I) :- 
+	holds(immediate_child_goal(Ag, G1, G), I),  
+	holds(active_goal(Ag, G), I),
+	goal(M, G),
+	goal(M1, G1),
+	-holds(G1, I),
+	holds(status(Ag, M1, inactive), I),
+	agent(Ag),
+	activity(M),
+	activity(M1).
+
+-holds(active_goal(Ag, G1), I) :- 
+	holds(minor(Ag, G1), I),
+	holds(immediate_child_goal(Ag, G1, G), I),
+	-holds(active_goal(Ag, G), I),
+	agent(Ag).
+          
+-holds(active_goal(Ag, G1), I) :- 
+	holds(minor(Ag, G1), I),
+	holds(G1, I),
+	holds(immediate_child_goal(Ag, G1, G), I),
+	holds(active_goal(Ag, G), I),
+	agent(Ag).
+
+-holds(active_goal(Ag, G1), I) :- 
+	holds(minor(Ag, G1), I),   
+	goal(M1, G1),   
+	holds(status(Ag, M1, K1), I),   %subact M1 has been completely executed
+	length(M1, K1),
+	-holds(G1, I),
+	holds(immediate_child_goal(Ag, G1, G), I),
+	holds(active_goal(Ag, G), I),
+	agent(Ag),
+	activity(M1),
+	index(K1).      	              
+                   
+          
+% If an awakened activity neither failed nor succeeded it
+% is said to be in progress.
+%%% Daniela:  I added the agent here for consistency with other fluents
+mental_defined_fluent(in_progress(Ag, M)) :- agent(Ag), activity(M), actor(M, Ag).
+        
+% An active activity with an active goal is in progess.
+%  the acheivement or abandondment of the activities goal will cause -active(goal)
+%  and therefore -in_progress(M).
+
+holds(in_progress(Ag, M), I) :- 
+	holds(active(Ag, M), I),
+	holds(active_goal(Ag, G), I),
+	goal(M, G),
+	agent(Ag),
+	activity(M).
+					   
+
+% A goal is in progess if the agent is executing an activity M with an active goal G.  
+%%% Daniela:   I added the parameter Agent here
+mental_defined_fluent(in_progress(Ag, G)) :- agent(Ag), possible_goal(Ag, G).
+ 
+holds(in_progress(Ag, G), I) :- 
+	holds(active(Ag, M), I),   
+	holds(active_goal(Ag, G), I),   
+	goal(M, G),
+	agent(Ag),
+	activity(M).
+
+% fluent next action %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Daniela:  I added the parameter Ag
+mental_defined_fluent(next_action(Ag, M, AA)) :- 
+	agent(Ag),
+	activity(M), 
+	agent_action(Ag, AA),
+	actor(M, Ag). 	
+ 
+% case 2 
+
+holds(next_action(Ag, M, PAA), I) :- 
+	holds(status(Ag, M, K), I),
+	component(M, K1, PAA),
+	holds(in_progress(Ag, M), I),  % means that M's goal is active
+	agent(Ag),
+	activity(M),
+	physical_agent_action(Ag, PAA),
+	next_index(K, K1).
+
+                              
+% case 3
+
+holds(next_action(Ag, M, start(Ag, M1)), I) :- 
+	holds(status(Ag, M, K), I),
+	component(M, K1, M1),
+	holds(in_progress(Ag, M), I),  % means that M's goal is active
+	-holds(active(Ag, M1), I),
+	agent(Ag),
+	activity(M),
+	activity(M1),
+	next_index(K, K1).
+                                       
+% case 4
+
+holds(next_action(Ag, M, AA), I) :- 
+	holds(status(Ag, M, K), I),
+	component(M, K1, M1),
+	holds(in_progress(Ag, M), I),   % M's goal is active
+	holds(in_progress(Ag, M1), I),  % replaced holds(active(M1),I),   
+	holds(next_action(Ag, M1, AA), I),
+	agent(Ag),
+	activity(M),
+	activity(M1),
+	next_index(K, K1).	
+
+                                                                              
+% case 1 % when M s goal is active but subactivity s goal G1 is not   
+ 
+holds(next_action(Ag, M, stop(Ag, M1)), I) :- 
+	holds(status(Ag, M, K), I),
+	component(M, K1, M1),                           
+	holds(in_progress(Ag, M), I),    
+	holds(active(Ag, M1), I),
+	goal(M1, G1),     
+	-holds(active_goal(Ag, G1), I),
+	agent(Ag),
+	activity(M),
+	activity(M1),
+	next_index(K, K1).
+
+            
+% Execution of a physical action increments the status.
+
+holds(status(Ag, M, K1), I1) :- 
+	occurs(PAA, I),
+	holds(next_action(Ag, M, PAA), I),
+	holds(status(Ag, M, K), I),
+	component(M, K1, PAA),
+	agent(Ag),
+	activity(M),
+	next_index(K, K1),
+	next(I, I1).
+
+% Ending a sub-activity increments the status.
+
+holds(status(Ag, M, K1), I1) :- 
+	occurs(stop(Ag, M1), I),
+	holds(status(Ag, M, K), I),
+	component(M, K1, M1),
+	holds(next_action(Ag, M, stop(Ag, M1)), I),
+	agent(Ag),
+	activity(M),
+	activity(M1),
+	next_index(K, K1),
+	next(I, I1).
+                      
+                        
+% The stopping of an activity returns its current descendants to an inactive state.
+
+holds(status(Ag, M1, inactive), I1) :- 
+	occurs(stop(Ag, M), I),
+	holds(descendant(Ag, M1, M), I),
+	agent(Ag),
+	activity(M),
+	activity(M1),
+	next(I, I1).
+	
+% ***************************	
+
+%%% Daniela: The stopping of an activity returns the goals of its current descendants to inactive
+
+-holds(active_goal(Ag, G1), I1) :- 
+    goal(M1, G1),
+	occurs(stop(Ag, M), I),
+	holds(descendant(Ag, M1, M), I),
+	agent(Ag),
+	activity(M),
+	activity(M1),
+	next(I, I1).
+	
+% ***************************		
+                        
+
+% translation of executability conditions
+-occurs(E,I) :- impossible(E,I).
+
+%%%%%%%%%%%%%%%%%%%%%%%  5. rules about History (not about diagram) %%%%%%%%%%
+% there are no duplicate activities
+% i.e. we cannot not have activities with different name but equal goals and plans
+
+comp(PAA) :- physical_agent_action(Ag, PAA).
+
+comp(M) :- activity(M).
+
+
+equal(M,M1) :- goal(M,G), goal(M1,G),
+			   equal_plan(M,M1),
+			   activity(M),
+			   activity(M1).
+ 
+ 
+equal_plan(M,M1) :- length(M,L), 
+					length(M1,L),
+					not different_component(M,M1),
+					activity(M),
+					activity(M1).
+                               
+
+different_component(M,M1) :- component(M,K,C), 
+							 component(M1,K,C1), 
+							 C != C1,
+							 activity(M),
+							 activity(M1).                                      
+							 
+:- equal(M,M1), 
+   M != M1,
+   activity(M),
+   activity(M1).                    								                         			    
+
+% Observations at step 0 define the initial status
+
+holds(F, 0) :- obs(F, true, 0).
+-holds(F, 0) :- obs(F, false, 0). 
+
+%%%%%%%%% Rules for computing models %%%%%%%%%%%%%
+% reality check  for observations of fluents and actions
+% Changed by Daniela
+
+:- obs(F, false, I),
+   holds(F, I). 
+    
+:- obs(F, true, I),
+   -holds(F, I).
+            
+occurs(E, I) :- hpd(E, true, I).	
+
+-occurs(E, I) :- hpd(E, false, I).
+	
+
+%%%%%%%%%%%%% 
+% Inertia Axioms
+
+
+holds(F, I1) :- 
+	fluent(inertial, F),
+	holds(F, I),
+	not -holds(F, I1),
+	step(I),
+	next(I, I1).
+
+-holds(F, I1) :- 
+	fluent(inertial, F),
+	-holds(F, I),
+	not holds(F, I1),
+	step(I),
+	next(I, I1).
+
+%%%%%%%%%%%%% 
+% CWA for defined fluents
+
+-holds(F, I) :- 
+	fluent(defined, F),
+	not holds(F, I),
+	step(I).
+
+%%%%%%%%%%%%% REASONING MODULE %%%%%%%%%%%%% 
+% Daniela's comment: The next rules from the AIA reasoning module
+% have been adapted to our domain
+%%% Daniela:  Added the Agent as a parameter below
+
+category_2_history(Ag, M, I) :- 
+	-holds(minor(Ag, M), I),
+	holds(active(Ag, M), I),
+	goal(M, G),
+	-holds(active_goal(Ag, G), I).   
+
+category_3_history(Ag, M, I) :- 
+	-holds(minor(Ag, M), I),
+	holds(in_progress(Ag, M), I). 
+	
+occurs(stop(Ag, M),I) :- 
+	category_2_history(Ag, M,I). 
+	
+occurs(AA,I) :- 
+	category_3_history(Ag, M, I),
+	not futile(Ag, M, I), % added by Daniela
+	-holds(minor(Ag, M), I), 
+	holds(in_progress(Ag, M), I),   % means active(M), active(G)
+	holds(next_action(Ag, M, AA), I),
+	not impossible(AA, I).		
+	
+%%% Daniela:  
+justified(Ag, PAA, I) :- holds(next_action(Ag, M, PAA), I), physical_agent_action(Ag, PAA).
+:- occurs(PAA, I), not justified(Ag, PAA, I), physical_agent_action(Ag, PAA).				
+
+occurs(stop(Ag, M), I) :-   
+	category_3_history(Ag, M, I),
+	futile(Ag, M, I), 
+	activity(M). 
+
+
+%=======================================
+
+category_4_history(Ag, G, I) :- 
+	-holds(minor(Ag, G), I),  
+	holds(active_goal(Ag, G),I),   
+	-holds(in_progress(Ag, G),I).
+	
+holds(replanned(Ag, G), I1) :- occurs(replan(Ag, G), I), next(I, I1).
+mental_inertial_fluent(replanned(Ag, G)) :- agent(Ag), possible_goal(Ag, G).
+
+impossible(replan(Ag, G), I) :- holds(replanned(Ag, G), I).
+impossible(replan(Ag, G), I) :- occurs(start(Ag, M), I), possible_goal(Ag, G).
+	
+occurs(replan(Ag, G), I) :-
+	category_4_history(Ag, G, I),
+	not impossible(replan(Ag, G), I),
+	not futile(Ag, G, I).
+	
+occurs(wait(Ag), I) :- 
+	category_4_history(Ag, G, I), 
+	futile(Ag, G, I).	
+	
+
+%=======================================
+								
+%%%%%%%%%%% From Justin's theory of intentions
+
+% Initially the agent's activities an goals are inactive. 
+
+holds(status(Ag, M, inactive), 0) :- agent(Ag), activity(M), actor(M, Ag). 
+-holds(active_goal(Ag, G), 0) :- agent(Ag), possible_goal(Ag, G).
+
+
+% ============================================
+% Display
+   
+%#show occurs/2. 

@@ -1,0 +1,32 @@
+% ------------------------------------------------------------------
+% Run with
+%    crmodels2 0 kb.txt LFscenario4diagnosis.txt m_newTI4.txt conn.txt | mkatoms
+% Notes: 
+%    hr.exe crashes
+%
+% Instead use (diagnosic rules replaced by optimization rules in clingo):
+%    clingo.exe kb.txt LFscenario4diagnosis.txt m_newTI_woDiag.txt diag4.txt conn.txt 0 | mkatoms
+% ------------------------------------------------------------------
+
+% SCENARIO 4 (DIAGNOSIS):
+%
+% Nicole went to a vegetarian restaurant. She ordered lentil soup. 
+% The waitress brought her a miso soup instead.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(veg_r).
+customer(nicole).
+food(lentil_soup).
+food(miso_soup).
+waiter(waitress).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..2).
+
+st_hpd(enter(nicole, veg_r), true, 0).
+st_hpd(order(nicole, lentil_soup, waitress), true, 1).
+st_hpd(put_down(waitress, miso_soup, t), true, 2).

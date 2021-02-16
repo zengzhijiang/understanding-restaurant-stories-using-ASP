@@ -1,0 +1,31 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%   clingo kb.txt LFscenario2serendipity.txt m_newTI_woDiag.txt conn.txt 0 | mkatoms
+% ------------------------------------------------------------------
+
+% SCENARIO 2 (SERENDIPITY):
+%
+% Nicole went to a vegetarian restaurant. She ordered lentil soup.
+% When she waitress brought her the soup, she told her that it was on the house.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(veg_r).
+customer(nicole).
+food(lentil_soup).
+waiter(waitress).
+
+person(owner).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..3).
+
+st_hpd(enter(nicole, veg_r), true, 0).
+st_hpd(order(nicole, lentil_soup, waitress), true, 1).
+
+st_hpd(pay(owner,b), true, 2).
+st_hpd(put_down(waitress, lentil_soup, t), true, 3).

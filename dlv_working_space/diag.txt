@@ -1,0 +1,12 @@
+% ==============================================
+% Some diagnosis in clingo
+
+physical_exogenous_action_for_all(make_unavailable(F, R)) :- food(F), restaurant(R).
+physical_exogenous_action_for_all(interference).
+
+physical_exogenous_action(Ag, A) :- agent(Ag), physical_exogenous_action_for_all(A).
+
+occurs(A, I) | -occurs(A, I) :- physical_exogenous_action_for_all(A), step(I), last_assigned(J), I < J.
+:~ occurs(A, I), physical_exogenous_action_for_all(A), step(I).
+-occurs(A, I) :- occurs(A, J), I != J, step(I), step(J), physical_exogenous_action_for_all(A).
+

@@ -1,0 +1,30 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 8:
+
+% He entered the place and was seated at one of the elegantly prepared tables. 
+% A waiter brought him a large menu and then left him alone to examine it. 
+% He pointed to one of the items on the list, which is lettuce_salad. 
+% The waiter brought the ordered dish. 
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(r).
+customer(he).
+food(lettuce_salad).
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..3).
+
+st_hpd(enter(he, r), true, 0).
+st_hpd(sit(he), true, 1).
+st_hpd(order(he, lettuce_salad, w), true, 2).
+st_hpd(put_down(w, lettuce_salad, t), true, 3).

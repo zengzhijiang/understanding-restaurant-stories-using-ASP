@@ -1,0 +1,31 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% SCENARIO 1 (NORMAL UNFOLDING):
+%
+% Nicole went to a vegetarian restaurant. She
+% ordered lentil lentil_soup. The waitress set the lentil_soup
+% in the middle of the table. Nicole enjoyed the
+% lentil_soup. She left the restaurant.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(veg_r).
+customer(nicole).
+food(lentil_soup).
+waiter(waitress).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..4).
+
+st_hpd(enter(nicole, veg_r), true, 0).
+st_hpd(order(nicole, lentil_soup, waitress), true, 1).
+st_hpd(put_down(waitress, lentil_soup, t), true, 2).
+st_hpd(eat(nicole, lentil_soup), true, 3).
+st_hpd(leave(nicole), true, 4).

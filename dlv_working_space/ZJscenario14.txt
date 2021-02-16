@@ -1,0 +1,42 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 14:
+% 
+% Waiter greeted Adam and Sanna. Adam and Sanna both ordered Pepsi to drink.
+% Then the waiter put down the Pepsi. 
+% Then they ordered bbq_chicken_bp and caesar_salad.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(droom).
+customer(they).
+person(adam).
+person(sanna).
+
+member(adam, they).
+member(sanna, they).
+
+% drink(pepsi).
+
+food(f).
+member(pepsi, f).
+member(bbq_chicken_bp, f).
+member(caesar_salad, f).
+
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..1).
+st_hpd(greet(w, they), true, 0).
+% st_hpd(order_drink(they, pepsi, w), true, 1).
+% st_hpd(put_down(w, pepsi, t), true, 2).
+st_hpd(order(they, f, w), true, 1).
+
+% drink

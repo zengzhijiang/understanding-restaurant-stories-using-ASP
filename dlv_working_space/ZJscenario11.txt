@@ -1,0 +1,38 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 11:
+% 
+% The waiter brought wine to table.
+% They ordered gyp_shashlik. 
+% Then waiter brought put down gyp_shashlik. They eat.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(r).
+customer(group).
+person(emanuel).
+person(ingrid).
+
+member(emanuel, group).
+member(ingrid, group).
+
+food(gyp_shashlik).
+
+
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..1).
+
+st_hpd(order(group, gyp_shashlik, w), true, 0).
+st_hpd(put_down(w, gyp_shashlik, t), true, 1).
+st_hpd(eat(group, gyp_shashlik), true, 2).
+
+% drinks......

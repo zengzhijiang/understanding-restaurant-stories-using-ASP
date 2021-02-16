@@ -1,0 +1,42 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 4:
+% Waiter put the menu on table and left. 
+% Narayan read the menu, but no "Thali" option.
+% Narayan request plain water instead of bottled water.
+% Narayan ordered rice_mixedvegecurry for food.
+% Narayan asked for bill. Waiter brought the bill.
+% Narayan payed for the bill.
+% Narayan left the restaurant.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(r).
+customer(narayan).
+food(f).
+member(rice_mixedvegecurry, f).
+member(thali, f).
+member(plain_water, f).
+
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..6).
+
+
+st_obs(menu_read(narayan), true, 0).
+st_obs(available(thali, r), false, 0).
+st_hpd(order(narayan, f, w), true, 1).
+st_hpd(put_down(w, f, t), true, 2).
+st_hpd(eat(narayan, rice_mixedvegecurry), true, 3).
+%st_hpd(eat(narayan, f), true, 3).
+st_hpd(request(narayan, b, w), true, 4).
+st_hpd(pay(narayan, b), true, 5).
+st_hpd(leave(narayan), true, 6).

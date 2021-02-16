@@ -1,0 +1,37 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 18:
+% Waiter lead them to table with leather booth.
+% They ordered lemon_water first. 
+% Then they examine the menus.
+% They ordered tagliatelle_rustiche for dinner.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(r).
+customer(they).
+person(rebecca).
+person(seth).
+
+member(rebecca, they).
+member(seth, they).
+
+drink(lemon_water).
+food(tagliatelle_rustiche).
+
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..3).
+
+st_hpd(lead_to(w. they, t), true, 0).
+st_hpd(order_drink(they, lemon_water, w), true, 1).
+st_obs(menu_read(they), true, 2).
+st_hpd(order(they, tagliatelle_rustiche, w), true, 3).

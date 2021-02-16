@@ -1,0 +1,930 @@
+% ------------------------------------------------------------------
+% Knowledge Base including description of restaurant dynamic domain and
+% activities, sequences, and defaults about history
+% ------------------------------------------------------------------
+
+% Daniela 04/20 - rule that also appears in the TI
+-occurs(A, I) :- impossible(A, I).
+
+% Daniela 04/20 - new rule, does not exist in the TI
+% comment it out when using the TI
+% :- occurs(A, I), not physical_action(A).
+
+% ============================================
+% Hierarchy of sorts
+
+person(X) :- customer(X).
+person(X) :- waiter(X).
+person(X) :- cook(X).
+
+thing(X) :- food(X).
+
+
+% Daniela 04/20
+thing(X) :- drink(X).
+
+
+thing(X) :- bill(X).
+
+agent(X) :- customer(X).
+agent(X) :- waiter(X).
+agent(X) :- cook(X).
+
+
+%==============================================================	
+% Instances of sorts
+
+% Assumed to exist in any restaurant scenario 
+% Simplifying assumption: Only one table, one menu and one bill are fine for now.
+% Bill b is the bill of "the" customer.
+
+cook(cook1).
+loc(t).
+thing(m).
+bill(b).
+
+loc(entrance).
+loc(outside).
+loc(counter).
+loc(kitchen).
+
+%==============================================================							 	
+%%%%%%%%%%%%%%%%%%   Describing the Physical World  %%%%%%%%%%%%%%%%%% 
+
+#maxint=33.
+
+#const n=33.
+step(0..n).
+next(I,I1):- step(I),step(I1), #succ(I, I1).%I1=I+1.
+
+%%% Physical Actions:
+physical_action(enter(P, R)) :- person(P), restaurant(R).
+physical_action(greet(W, C)) :- waiter(W), customer(C).
+%physical_action(lead_to(W, C, L)) :- waiter(W), customer(C), loc(L).
+physical_action(move(P, L1, L2)) :- person(P), loc(L1), loc(L2), L1 != L2.
+physical_action(sit(P)) :- person(P).
+physical_action(pick_up(P, T, L)) :- person(P), thing(T), loc(L).
+physical_action(put_down(P, T, L)):- person(P), thing(T), loc(L).
+physical_action(order(C, F, W)):- customer(C), food(F), waiter(W).
+
+
+% Daniela 04/20
+physical_action(order_drink(C, D, W)):- customer(C), drink(D), waiter(W).
+
+
+physical_action(prepare(Ck, F, W)) :- cook(Ck), food(F), waiter(W).
+physical_action(eat(P, F)):- person(P), food(F).
+
+
+% Daniela 04/20
+physical_action(drink(P, D)):- person(P), drink(D).
+
+
+physical_action(request(P1, T, P2)) :- person(P1), thing(T), person(P2), P1 != P2.
+physical_action(pay(P, B)) :- person(P), bill(B).
+physical_action(stand_up(P)) :- person(P).
+physical_action(leave(P)):- person(P).
+physical_action(make_unavailable(F, R)) :- food(F), restaurant(R).
+
+%Zengzhi
+physical_action(make_drink_unavailable(D, R)) :- drink(D), restaurant(R).
+
+physical_action(interference).
+
+%%% Collaborative actions
+collaborative_physical_action(lead_to(W, C, L)) :- waiter(W), customer(C), loc(L).
+actor(lead_to(W, C, L), W) :- waiter(W), customer(C), loc(L).
+actor(lead_to(W, C, L), C) :- waiter(W), customer(C), loc(L).
+actor(enter(P, R), P) :- person(P), restaurant(R).
+actor(greet(W, C), W) :- waiter(W), customer(C).
+%actor(lead_to(W, C, L), W) :- waiter(W), customer(C), loc(L).
+actor(move(P, L1, L2), P) :- person(P), loc(L1), loc(L2), L1 != L2.
+actor(sit(P), P) :- person(P).
+actor(pick_up(P, T, L), P) :- person(P), thing(T), loc(L).
+actor(put_down(P, T, L), P):- person(P), thing(T), loc(L).
+actor(order(C, F, W), C):- customer(C), food(F), waiter(W).
+actor(prepare(Ck, F, W), Ck) :- cook(Ck), food(F), waiter(W).
+actor(eat(P, F), P):- person(P), food(F).
+
+% Zengzhi
+actor(drink(P, D), P):- person(P), drink(D).
+
+actor(request(P1, T, P2), P1) :- person(P1), thing(T), person(P2).
+actor(pay(P, B), P) :- person(P), bill(B).
+actor(stand_up(P), P) :- person(P).
+actor(leave(P), P):- person(P).
+
+% physical_agent_action(Ag, A) - A is a physical agent action for agent Ag
+physical_agent_action(Ag, A) :- agent(Ag), physical_action(A), actor(A, Ag).
+
+% physical_exogenous_action(Ag, A) - A is an exogenous agent action for agent Ag
+physical_exogenous_action(Ag, A) :- agent(Ag), physical_action(A), actor(A, X), Ag != X.
+
+% Actions without an agent are exogenous for all agents
+physical_exogenous_action(Ag, make_unavailable(F, R)) :- agent(Ag), food(F), restaurant(R).
+
+%Zengzhi
+physical_exogenous_action(Ag, make_drink_unavailable(D, R)) :- agent(Ag), drink(D), restaurant(R).
+
+physical_exogenous_action(Ag, interference) :- agent(Ag).
+
+%%% Collaborative actions
+physical_agent_action(Ag, A) :- collaborative_physical_action(A), actor(A, Ag).
+physical_exogenous_action(Ag, A) :- collaborative_physical_action(A), agent(Ag), not actor(A, Ag).
+
+physical_inertial_fluent(in(C, R)) :- customer(C), restaurant(R).
+physical_inertial_fluent(welcomed(C)) :- customer(C).
+physical_inertial_fluent(at_l(T, L)) :- thing(T), loc(L).
+physical_inertial_fluent(at_l(P, L)) :- person(P), loc(L).
+physical_inertial_fluent(sitting(P)) :- person(P).
+physical_inertial_fluent(standing_by(P, L)) :- person(P), loc(L).
+physical_inertial_fluent(holding(P, T)) :- person(P), thing(T).
+physical_inertial_fluent(hungry(C)) :- customer(C).
+physical_inertial_fluent(paid(B)) :- bill(B).
+physical_inertial_fluent(open(R)) :- restaurant(R).
+physical_inertial_fluent(informed(P1, S, P2)) :- person(P1), thing(S), person(P2).
+physical_inertial_fluent(bill_generated(C, B)) :- customer(C), bill(B).
+physical_inertial_fluent(food_prepared(Ck, F, W)) :- cook(Ck), food(F), waiter(W).
+physical_inertial_fluent(available(F, R)) :- food(F), restaurant(R).
+
+%Zengzhi
+physical_inertial_fluent(drink_available(D, R)) :- drink(D), restaurant(R).
+
+physical_inertial_fluent(served(C)) :- customer(C).
+physical_inertial_fluent(menu_read(C)) :- customer(C).
+
+physical_defined_fluent(satiated(C)) :- customer(C).
+physical_defined_fluent(satiated_and_out(C)) :- customer(C).
+physical_defined_fluent(ready_to_eat(C, F)) :- customer(C), food(F).
+physical_defined_fluent(done_with_payment(C)) :- customer(C).
+physical_defined_fluent(food_to_request(W)) :- waiter(W).
+physical_defined_fluent(food_ready(F, W)) :- food(F), waiter(W).
+physical_defined_fluent(has_bill_to_pick_up(W)) :- waiter(W).
+physical_defined_fluent(served_and_billed(C, B)) :- customer(C), bill(B).
+physical_defined_fluent(done_with_request(Ck, W)) :- cook(Ck), waiter(W).
+physical_defined_fluent(order_transmitted(C)) :- customer(C).
+
+physical_defined_fluent(inf(P1, P2)) :- person(P1), person(P2).
+
+% ========================================================================
+% % % Direct effects
+% ========================================================================
+
+holds(in(C,R),I1):- occurs(enter(C,R),I), 
+						 holds(at_l(C,outside),I),
+						 holds(open(R),I),
+						 next(I,I1).
+						 
+holds(at_l(C,entrance),I1):- occurs(enter(C,R),I),
+							 holds(at_l(C,outside),I),
+							 restaurant(R),
+							 next(I,I1).
+							 					 
+holds(welcomed(C),I1):- occurs(greet(W,C),I),
+						 holds(at_l(C,entrance),I),
+						 next(I,I1).
+				 
+holds(at_l(P,L),I1):- occurs(lead_to(W,P,L),I),
+					  next(I,I1).
+
+holds(at_l(W,L),I1):- occurs(lead_to(W,P,L),I),
+					  next(I,I1).
+
+holds(standing_by(C,T),I1):- occurs(lead_to(W,C,T),I),
+					             next(I,I1).
+								 
+holds(standing_by(W,T),I1):- occurs(lead_to(W,C,T),I),
+					             next(I,I1).
+
+holds(sitting(P),I1):- occurs(sit(P),I),
+						 holds(standing_by(P,T),I),
+						 next(I,I1).
+
+-holds(standing_by(P,T),I1):- occurs(sit(P),I),
+						          holds(standing_by(P,T),I),
+						          next(I,I1).
+								  								  
+holds(holding(P,S),I1):- occurs(pick_up(P,S,L),I),
+					     holds(at_l(S,L),I),
+						 holds(at_l(P,L),I),
+						 next(I,I1).
+
+holds(at_l(P,L),I1):- occurs(pick_up(P,S,L),I),
+					  holds(at_l(S,L),I),
+					  holds(at_l(P,L),I),
+					  next(I,I1).
+
+-holds(at_l(S,L),I1):-   occurs(pick_up(P,S,L),I),
+						 holds(at_l(S,L),I),
+						 holds(at_l(P,L),I),
+						 next(I,I1).
+
+holds(menu_read(C), I1) :- occurs(pick_up(C, m, t), I),
+                           customer(C),
+                           next(I, I1).						   
+						 
+holds(at_l(S,L2),I1):- occurs(move(S,L1,L2),I),
+					   holds(at_l(S,L1),I),
+					   L1 != L2,
+					   next(I,I1).
+						 								  
+holds(at_l(S,L),I1):- occurs(put_down(P,S,L),I),
+					  holds(holding(P,S),I),
+					  holds(at_l(P,L),I),
+					  next(I,I1).
+
+-holds(holding(P,S),I1):- occurs(put_down(P,S,L),I),
+						  holds(holding(P,S),I),
+						  next(I,I1).
+						  
+holds(served(C), I1) :- occurs(put_down(W,F,t), I),
+                        waiter(W),
+                        food(F),
+						customer(C),
+                        next(I,I1).						
+						
+holds(informed(W,F,C),I1):- occurs(order(C,F,W),I),
+                            not occurs(interference, I),
+                            next(I,I1).
+							
+holds(informed(W, F, C), I1):- occurs(order_drink(C, F, W), I),
+								next(I, I1).
+
+%1 {holds(informed(W,F1,C),I1) : other_food(F1, F)} 1 :- occurs(order(C,F,W),I),
+%                                                        occurs(interference, I),
+%                                                        next(I,I1).
+														
+holds(informed(W,F1,C),I1) | -holds(informed(W,F1,C),I1) :- other_food(F1, F),	
+														occurs(order(C,F,W),I),
+                                                        occurs(interference, I),
+                                                        next(I,I1).
+														
+holds(inf(P1, P2), I) :- holds(informed(P1, S, P2), I).
+
+:- occurs(order(C,F,W),I), 
+   not holds(inf(W, C), I1),
+   next(I,I1).
+   
+-holds(informed(W, F1, C), I) :- holds(informed(W, F, C), I), F1 != F, food(F1).
+													
+%:- occurs(order(C,F,W),I), 
+%   next(I,I1),
+%   #count{F1 : holds(informed(W,F1,C),I1)} = N, 
+%   N != 1.
+														
+
+														
+
+other_food(F1, F) :- food(F), 
+				     food(F1), 
+					 F != F1.							
+
+holds(bill_generated(C,B),I1):- occurs(order(C,F,W),I),
+								bill(B),
+						        next(I,I1).
+								
+holds(at_l(B,counter),I1):- occurs(order(C,F,W),I),
+							bill(B),
+						    next(I,I1).								
+
+holds(informed(P2,S,P1),I1):- occurs(request(P1,S,P2),I),
+                              not occurs(interference, I),
+                              P1 != P2,
+                              next(I,I1).
+
+%1 {holds(informed(P2, S1, P1),I1) : other_food(S1, S)} 1 :- occurs(request(P1,S,P2),I),				
+%														    occurs(interference, I), 
+%															food(S),
+%															P1 != P2,
+%															next(I,I1).
+														
+holds(informed(P2, S1, P1),I1) | -holds(informed(P2, S1, P1),I1) :- other_food(S1, S),	
+															occurs(request(P1,S,P2),I),				
+														    occurs(interference, I), 
+															food(S),
+															P1 != P2,
+															next(I,I1).
+															
+														
+:- occurs(request(P1,S,P2),I), 
+   not holds(inf(P2, P1), I1),
+   next(I,I1).
+   
+%-holds(informed(P2, S1, P1), I) :- holds(informed(P2, S, P1), I), S1 != S, food(S1), food(S).
+
+%:- occurs(request(P1,S,P2),I),				
+%   occurs(interference, I), 
+%   food(S),
+%   P1 != P2,
+%   next(I,I1),
+%   #count{S1 : holds(informed(P2, S1, P1),I1)} = N, 
+%   N != 1.															
+							  
+holds(food_prepared(P,F,W),I1):- occurs(prepare(P,F,W),I),
+								 next(I,I1).
+
+holds(at_l(F,kitchen),I):- occurs(prepare(P,F,W),I),
+						   next(I,I1).
+
+
+-holds(hungry(C),I1):- occurs(eat(C,F),I),
+					      holds(hungry(C),I),
+					      next(I,I1).
+					  					   
+-holds(at_l(F,L),I1):- occurs(eat(C,F),I),
+					   holds(at_l(F,L),I),
+					   next(I,I1).
+
+holds(paid(B),I1):- occurs(pay(P,B),I),
+					  holds(bill_generated(C,B),I),
+					  next(I,I1).
+
+holds(standing_by(P,t),I1):- occurs(stand_up(P),I),
+						         holds(sitting(P),I),
+						         next(I,I1).
+
+-holds(sitting(P),I1):- occurs(stand_up(P),I),
+						  holds(sitting(P),I),
+						  next(I,I1).								  
+
+-holds(in(C,R),I1):- occurs(leave(C),I),
+                      holds(in(C, R), I),
+					  next(I,I1).
+
+holds(at_l(C,outside),I1):- occurs(leave(C),I),
+					        next(I,I1).		
+
+-holds(available(F, R), I1) :- occurs(make_unavailable(F, R), I),
+                            next(I, I1).		
+
+
+
+
+%Zengzhi 
+-holds(drink_available(D, R), I1) :- occurs(make_drink_unavailable(D, R), I),
+                            next(I, I1).						
+
+
+% ========================================================================
+% % % Indirect effects
+% ========================================================================
+			  
+-holds(standing_by(P,t),I):- -holds(at_l(P,t),I).
+
+
+-holds(at_l(S,L2),I):- holds(at_l(S,L1),I),
+					   loc(L2),
+					   L1 != L2.
+
+					   
+holds(at_l(S,P),I):- holds(holding(P,S),I).
+
+holds(food_to_request(W),I):- holds(informed(W,F,C),I).
+
+holds(satiated(C), I) :- -holds(hungry(C), I).
+
+-holds(at_l(B,t),I):- holds(paid(B),I).
+
+holds(satiated_and_out(C), I) :- holds(satiated(C), I), holds(at_l(C, outside), I).
+
+holds(ready_to_eat(C, F), I) :- holds(at_l(F, t), I),
+                 			    holds(hungry(C), I),
+                			 	holds(sitting(C),I),
+                 			 	food(F),
+                 			 	step(I).
+
+
+
+holds(done_with_payment(C),I):- holds(bill_generated(C,B),I),
+                      		    holds(paid(B), I),
+                              	step(I).
+												   
+holds(food_ready(F, W), I) :-
+	holds(food_prepared(Ck, F, W), I).
+	
+holds(has_bill_to_pick_up(W), I) :-
+	holds(informed(W, B, C), I),
+	bill(B).	
+	
+holds(done_with_request(Ck, W), I) :-
+	holds(food_prepared(Ck, F, W), I).
+	
+holds(order_transmitted(C), I) :- 
+	holds(informed(W, F, C), I).
+	
+holds(served_and_billed(C, B), I) :-
+    holds(served(C), I),
+    holds(bill_generated(C,B),I),
+    holds(paid(B), I),
+    step(I).	
+	
+holds(served_and_billed(C, B), I) :-
+    holds(served(C), I),
+    holds(bill_generated(C,B),I),
+    holds(at_l(B, t), I),
+    step(I).	
+	
+-holds(informed(W, F1, C), I) :-
+	holds(informed(W, F2, C), I),
+	food(F1),
+	food(F2),
+	F1 != F2.
+	
+% =====================================================================
+% Executability conditions					   
+% =====================================================================					   
+
+%%% Daniela: added the condition that each one of these should be a physical_action
+impossible(enter(C, R), I) :- 
+	physical_action(enter(C, R)),
+	-holds(open(R), I).
+
+impossible(enter(C, R), I) :- 
+	physical_action(enter(C, R)),
+	-holds(at_l(C, outside), I).
+
+impossible(greet(W, C), I) :- 
+	physical_action(greet(W, C)),
+	-holds(at_l(C, entrance), I).
+
+impossible(greet(W, C), I) :- 
+	physical_action(greet(W, C)),
+	-holds(in(C, R), I).	
+
+impossible(lead_to(W, C, L), I) :- 
+	collaborative_physical_action(lead_to(W, C, L)),
+	-holds(at_l(C, entrance), I).
+	
+impossible(lead_to(W, C, L), I) :- 
+	collaborative_physical_action(lead_to(W, C, L)),
+	-holds(welcomed(C), I).	
+	
+impossible(lead_to(W, C, L), I) :- 
+	collaborative_physical_action(lead_to(W, C, L)),
+	holds(at_l(C, L), I).	
+	
+impossible(sit(P), I) :- 
+	physical_action(sit(P)),
+	-holds(standing_by(P, t), I).
+
+impossible(pick_up(P, T, L), I) :- 
+	physical_action(pick_up(P, T, L)),
+	-holds(at_l(T, L), I).
+							
+impossible(pick_up(P, T, L), I) :- 
+	physical_action(pick_up(P, T, L)),
+	-holds(at_l(P, L), I).
+	
+impossible(pick_up(W, F, kitchen), I) :- 
+	physical_action(pick_up(W, F, kitchen)),
+	-holds(food_ready(F, W), I),
+	waiter(W),
+	food(F).	
+							
+impossible(put_down(P, T, L), I) :- 
+	physical_action(put_down(P, T, L)),
+	-holds(holding(P, T), I).
+								 
+impossible(put_down(P, T, L), I) :- 
+	physical_action(put_down(P, T, L)),
+	-holds(at_l(P, L), I).
+								 							
+impossible(order(C, F, W), I) :- 
+	physical_action(order(C, F, W)),
+	-holds(at_l(W, t),I).
+	
+impossible(order(C, F, W), I) :- 
+	physical_action(order(C, F, W)),
+	-holds(menu_read(C),I).	
+						  
+impossible(order(C, F, W), I) :- 
+	physical_action(order(C, F, W)),
+	-holds(available(F, R), I),
+	holds(in(C, R), I).
+
+impossible(order(C, F, W), I) :- 
+	physical_action(order(C, F, W)),
+	-holds(at_l(m, t),I).	
+	
+	
+%Zengzhi
+impossible(order_drink(C, D, W), I) :- 
+	physical_action(order_drink(C, D, W)),
+	-holds(at_l(W, t),I).
+	
+impossible(order_drink(C, D, W), I) :- 
+	physical_action(order_drink(C, D, W)),
+	-holds(menu_read(C),I).	
+						  
+impossible(order_drink(C, D, W), I) :- 
+	physical_action(order_drink(C, D, W)),
+	-holds(drink_available(D, R), I),
+	holds(in(C, R), I).
+
+impossible(order_drink(C, D, W), I) :- 
+	physical_action(order_drink(C, D, W)),
+	-holds(at_l(m, t),I).
+	
+	
+	
+	
+	
+
+impossible(move(P, L1, L2), I) :- 
+	physical_action(move(P, L1, L2)),
+	-holds(at_l(P, L1), I).		
+						   					
+impossible(move(W, L, kitchen), I) :- 
+	physical_action(move(W, L, kitchen)),
+	-holds(food_to_request(W), I),
+	waiter(W).
+	
+impossible(move(W, t, counter), I) :- 
+	physical_action(move(W, t, counter)),
+	-holds(has_bill_to_pick_up(W), I).	
+	
+impossible(request(W, F, Ck), I) :- 
+	physical_action(request(W, F, Ck)),
+	-holds(informed(W, F, C), I),
+	customer(C),
+	waiter(W),
+	food(F),
+	cook(Ck).
+
+impossible(request(W, F, Ck), I) :- 
+	physical_action(request(W, F, Ck)), 
+	-holds(at_l(Ck, kitchen), I),
+	waiter(W),
+	food(F),
+	cook(Ck).
+							
+impossible(request(W, F, Ck), I) :- 
+	physical_action(request(W, F, Ck)), 
+	-holds(at_l(W, kitchen), I),
+	waiter(W),
+	food(F),
+	cook(Ck).	
+	
+impossible(prepare(Ck, F, W), I) :- 
+	physical_action(prepare(Ck, F, W)),
+	holds(food_prepared(Ck, F, W), I).
+						 
+impossible(prepare(Ck, F, W), I) :- 
+	physical_action(prepare(Ck, F, W)),
+	-holds(informed(Ck, F, W), I).
+
+impossible(eat(C, F), I) :- 
+	physical_action(eat(C, F)),
+	-holds(at_l(F, t), I),
+	customer(C).
+	
+impossible(eat(C, F), I) :- 
+	physical_action(eat(C, F)),
+	-holds(at_l(C, t), I),
+	customer(C).
+
+impossible(eat(C, F), I) :- 
+	physical_action(eat(C, F)),
+	-holds(sitting(C), I),
+	customer(C).	
+
+impossible(eat(P, F), I) :- 
+	physical_action(eat(P, F)),
+	-holds(hungry(P), I).
+	
+	
+%Zengzhi	
+impossible(drink(C, D), I) :- 
+	physical_action(drink(C, D)),
+	-holds(at_l(D, t), I),
+	customer(C).
+	
+impossible(drink(C, D), I) :- 
+	physical_action(drink(C, D)),
+	-holds(at_l(C, t), I),
+	customer(C).
+
+impossible(drink(C, D), I) :- 
+	physical_action(drink(C, D)),
+	-holds(sitting(C), I),
+	customer(C).
+	
+	
+	
+	
+	
+
+impossible(pay(C, B), I) :- 
+	physical_action(pay(C, B)),
+	-holds(at_l(B, t), I),
+	customer(C).
+						
+impossible(pay(P, B), I) :- 
+	physical_action(pay(P, B)),
+	-holds(bill_generated(C, B), I),
+	customer(C).
+	
+impossible(make_unavailable(F, R), I) :- 
+	physical_action(make_unavailable(F, R)),
+	-holds(available(F, R), I).		
+
+impossible(make_unavailable(F, R), I) :- 
+	physical_action(make_unavailable(F, R)),
+	holds(holding(P, m), I).
+	
+impossible(make_unavailable(F, R), I) :- 
+	physical_action(make_unavailable(F, R)),
+	occurs(pick_up(P, m, L), I).
+	
+impossible(make_unavailable(F, R), I) :- 
+	physical_action(make_unavailable(F, R)),
+	occurs(put_down(P, m, L), I).
+
+
+%Zengzhi
+impossible(make_drink_unavailable(D, R), I) :- 
+	physical_action(make_drink_unavailable(D, R)),
+	-holds(available(D, R), I).		
+
+impossible(make_drink_unavailable(D, R), I) :- 
+	physical_action(make_drink_unavailable(D, R)),
+	holds(holding(P, m), I).
+	
+impossible(make_drink_unavailable(D, R), I) :- 
+	physical_action(make_drink_unavailable(D, R)),
+	occurs(pick_up(P, m, L), I).
+	
+impossible(make_drink_unavailable(F, R), I) :- 
+	physical_action(make_drink_unavailable(F, R)),
+	occurs(put_down(P, m, L), I).
+
+
+
+
+
+
+	
+
+impossible(leave(C), I) :-
+	physical_action(leave(C)),
+	holds(sitting(C), I).
+	
+impossible(leave(C), I) :-
+	physical_action(leave(C)),
+	-holds(at_l(C, entrance), I).	
+	
+
+%==============================================================
+% Inertia Axioms for inertial fluents 	  
+
+holds(F,I1) :- fluent(inertial,F),
+               holds(F,I),                  
+               not -holds(F,I1),
+               I < n,
+               next(I, I1).
+
+-holds(F,I1) :- fluent(inertial,F),
+		        -holds(F,I),                
+                not holds(F,I1),
+                I < n,
+                next(I, I1).
+
+%==============================================================
+% CWA for defined fluents 
+				
+-holds(F,I) :- fluent(defined,F),                
+			   step(I),               
+			   not holds(F,I).
+			 			   
+%==============================================================	
+% Stereotypical Activities for Restaurant Dining
+%==============================================================	
+
+% ============================================
+% Activities
+
+%Zengzhi  some modifications needed for activities
+
+possible_goal(C, satiated_and_out(C)) :- customer(C).
+
+activity(c_act(C, R, W, F, D)) :- customer(C), restaurant(R), food(F), waiter(W), drink(D).
+goal(c_act(C, R, W, F, D), satiated_and_out(C)) :- activity(c_act(C, R, W, F, D)).
+component(c_act(C, R, W, F, D), 1, enter(C, R)) :- activity(c_act(C, R, W, F, D)).
+component(c_act(C, R, W, F, D), 2, lead_to(W, C, t)) :- activity(c_act(C, R, W, F, D)).
+component(c_act(C, R, W, F, D), 3, sit(C)) :- activity(c_act(C, R, W, F, D)).
+component(c_act(C, R, W, F, D), 4, c_subact_1(C, F, D, W)) :- activity(c_act(C, R, W, F, D)).
+component(c_act(C, R, W, F, D), 5, eat(C,F)) :- activity(c_act(C, R, W, F, D)).
+component(c_act(C, R, W, F, D), 6, drink(C,D)) :- activity(c_act(C, R, W, F, D)).
+component(c_act(C, R, W, F, D), 7, c_subact_2(C, W)) :- activity(c_act(C, R, W, F, D)).
+component(c_act(C, R, W, F, D), 8, stand_up(C)) :- activity(c_act(C, R, W, F, D)).
+component(c_act(C, R, W, F, D), 9, move(C, t, entrance)) :- activity(c_act(C, R, W, F, D)).
+component(c_act(C, R, W, F, D), 10, leave(C)) :- activity(c_act(C, R, W, F, D)).
+length(c_act(C, R, W, F, D), 10) :- activity(c_act(C, R, W, F, D)).
+
+actor(c_act(C, R, W, F, D), C) :- activity(c_act(C, R, W, F, D)).
+
+%=====
+
+possible_goal(C, order_transmitted(C)) :- customer(C).
+
+activity(c_subact_1(C, F, D, W)) :- customer(C), food(F), waiter(W), drink(D).
+goal(c_subact_1(C, F, D, W), order_transmitted(C)) :- activity(c_subact_1(C, F, D, W)).
+component(c_subact_1(C, F, D, W), 1, pick_up(C, m, t)) :- activity(c_subact_1(C, F, D, W)).
+component(c_subact_1(C, F, D, W), 2, put_down(C, m, t)) :- activity(c_subact_1(C, F, D, W)).
+component(c_subact_1(C, F, D, W), 3, order(C, F, W)) :- activity(c_subact_1(C, F, D, W)).
+component(c_subact_1(C, F, D, W), 3, order_drink(C, D, W)) :- activity(c_subact_1(C, F, D, W)).
+length(c_subact_1(C, F, D, W), 3) :- activity(c_subact_1(C, F, D, W)).
+
+actor(c_subact_1(C, F, D, W), C) :- activity(c_subact_1(C, F, D, W)).
+
+%====
+
+possible_goal(C, done_with_payment(C)) :- customer(C).
+
+activity(c_subact_2(C, W)) :- customer(C), waiter(W).
+goal(c_subact_2(C, W), done_with_payment(C)) :- activity(c_subact_2(C, W)).
+component(c_subact_2(C, W), 1, request(C, b, W)) :- activity(c_subact_2(C, W)).
+component(c_subact_2(C, W), 2, pay(C, b)) :- activity(c_subact_2(C, W)).
+length(c_subact_2(C, W), 2) :- activity(c_subact_2(C, W)).
+
+actor(c_subact_2(C, W), C) :- activity(c_subact_2(C, W)).
+
+%==============================================================	
+%%% Daniela:  The waiter and cook sequences are now converted into activities with goals.
+
+% First F - the food that the waiter tells the cook to prepare
+% the second F - the food that the waiter picks up from the kitchen
+% General format: 
+% sequence(w_seq(W, C, F1, F2, B)).
+% F1 and F2 may be different
+% In the normal scenario, we have: F1 = F2.
+
+possible_goal(W, served_and_billed(C, B)) :- waiter(W), customer(C), bill(B).
+
+activity(w_act(W, C, F1, F2, D, B)) :- waiter(W), customer(C), food(F1), food(F2), drink(D), bill(B).
+goal(w_act(W, C, F1, F2, D, B), served_and_billed(C, B)) :- activity(w_act(W, C, F1, F2, D, B)).
+component(w_act(W, C, F1, F2, D, B), 1, greet(W, C)) :- activity(w_act(W, C, F1, F2, D, B)).
+component(w_act(W, C, F1, F2, D, B), 2, lead_to(W, C, t)) :- activity(w_act(W, C, F1, F2, D, B)).
+component(w_act(W, C, F1, F2, D, B), 3, move(W, t, kitchen)) :- activity(w_act(W, C, F1, F2, D, B)).
+component(w_act(W, C, F1, F2, D, B), 4, request(W, F1, cook1)) :- activity(w_act(W, C, F1, F2, D, B)).
+component(w_act(W, C, F1, F2, D, B), 5, pick_up(W, F2, kitchen)) :- activity(w_act(W, C, F1, F2, D, B)).
+component(w_act(W, C, F1, F2, D, B), 5, pick_up(W, D, kitchen)) :- activity(w_act(W, C, F1, F2, D, B)).
+component(w_act(W, C, F1, F2, D, B), 6, move(W, kitchen, t)) :- activity(w_act(W, C, F1, F2, D, B)).
+component(w_act(W, C, F1, F2, D, B), 7, put_down(W, F2, t)) :- activity(w_act(W, C, F1, F2, D, B)).
+component(w_act(W, C, F1, F2, D, B), 7, put_down(W, D, t)) :- activity(w_act(W, C, F1, F2, D, B)).
+component(w_act(W, C, F1, F2, D, B), 8, move(W, t, counter)) :- activity(w_act(W, C, F1, F2, D, B)).
+component(w_act(W, C, F1, F2, D, B), 9, pick_up(W, B, counter)) :- activity(w_act(W, C, F1, F2, D, B)).
+component(w_act(W, C, F1, F2, D, B), 10, move(W, counter, t)) :- activity(w_act(W, C, F1, F2, D, B)).
+component(w_act(W, C, F1, F2, D, B), 11, put_down(W, B, t)) :- activity(w_act(W, C, F1, F2, D, B)).
+length(w_act(W, C, F1, F2, D, B), 11) :- activity(w_act(W, C, F1, F2, D, B)).
+actor(w_act(W, C, F1, F2, D, B), W) :- activity(w_act(W, C, F1, F2, D, B)).
+
+%====
+
+possible_goal(Ck, done_with_request(Ck, W)) :- cook(Ck), waiter(W).
+
+activity(ck_act(Ck, F, W)) :- cook(Ck), food(F), waiter(W).
+goal(ck_act(Ck, F, W), done_with_request(Ck, W)) :- activity(ck_act(Ck, F, W)).
+component(ck_act(Ck, F, W), 1, prepare(Ck, F, W)) :- activity(ck_act(Ck, F, W)).
+length(ck_act(Ck, F, W), 1) :- activity(ck_act(Ck, F, W)).
+actor(ck_act(Ck, F, W), Ck) :- activity(ck_act(Ck, F, W)).
+
+%====================================================================
+% Futility rules for restaurants
+
+futile(C, c_act(C, R, W, F), I) :- obs(open(R), false, I), activity(c_act(C, R, W, F)).
+futile(C, c_act(C, R, W, F), I) :- obs(available(F, R), false, I), activity(c_act(C, R, W, F)).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%====================================================================
+% History - defaults
+
+holds(open(R), 0) :- restaurant(R).
+holds(hungry(C), 0) :- customer(C).
+holds(at_l(C, outside), 0) :- customer(C).
+holds(at_l(waitress, entrance), 0). 
+holds(at_l(m, t), 0).
+holds(at_l(cook1, kitchen), 0).
+holds(at_l(D, kitchen), 0) :- drink(D).
+holds(available(F, R), 0) :- food(F), restaurant(R).
+holds(drink_available(D, R), 0) :- drink(D), restaurant(R).
+
+
+-holds(menu_read(C), 0) :- customer(C).
+
+-holds(F, 0) :- fluent(inertial, F), not holds(F, 0).
+
+occurs(select(C, satiated_and_out(C)), 0) :- customer(C).
+
+occurs(select(W, served_and_billed(C, B)), I1) :- 
+	waiter(W), 
+	bill(B),
+	holds(in(C, R), I1), 
+	-holds(in(C, R), I),
+	next(I, I1).
+	
+occurs(select(Ck, done_with_request(Ck, W)), I1) :- 
+	cook(Ck),
+	holds(informed(Ck, F, W), I1),
+	-holds(informed(Ck, F, W), I),
+	next(I, I1).
+
+%1{occurs(start(P, M), I+1) : actor(M, P), goal(M, G)}1 :- occurs(select(P, G), I).
+
+occurs(start(P, M), I1) | -occurs(start(P, M), I1) :-
+	actor(M, P), 
+	goal(M, G), 
+	occurs(select(P, G), I), 
+	next(I, I1).
+
+-occurs(start(P, M1), I) :-
+		occurs(start(P, M), I),
+		M != M1,
+		activity(M1).
+		
+start_some_activity(P, I) :- occurs(start(P, M), I).
+:- actor(M, P), 
+	goal(M, G), 
+	occurs(select(P, G), I), 
+	next(I, I1),
+	not start_some_activity(P, I1).
+	
+%:- occurs(select(P, G), I), 
+%   next(I, I1),
+%   #count{ M : occurs(start(P, M), I1)} = N,
+%   N != 1.
+
+
+
+%CSE491 2018 SPRING Zengzhi
+
+atomic_occurs(move(Ag, L1, L2), I) :-
+			occurs(move(G, L1, L2), I),
+			member(Ag, G).	
+			
+
+			
+atomic_occurs(enter(P, R), I) :-
+			occurs(enter(G, R), I),
+			member(P, G).
+			
+atomic_occurs(greet(W, C), I) :-
+			occurs(greet(W, G), I),
+			member(C, G).
+			
+atomic_occurs(sit(P), I) :-
+			occurs(sit(G), I),
+			member(P, G).
+
+ atomic_occurs(order(C, F, W), I) :-
+ 			occurs(order(G, F, W), I),
+ 			member(C, G).	
+			
+ atomic_occurs(eat(P, F), I) :-
+ 			occurs(eat(G, F), I),
+ 			member(P, G).
+			
+%handle multi customers, multi dishes
+ atomic_occurs(eat(P, DISH), I) :-
+			occurs(eat(G, F), I),
+			member(P, G),
+			member(DISH, F).
+			
+atomic_occurs(eat(P, DISH), I) :-
+		occurs(eat(P, F), I),
+			member(DISH, F).
+			
+atomic_occurs(order(C, DISH, W), I) :-
+			occurs(order(G, F, W), I),
+			member(C, G),
+			member(DISH, F).
+			
+atomic_occurs(order(P, DISH, W), I) :-
+			occurs(order(P, F, W), I),
+			member(DISH, F).
+			
+			
+o(A, I) :- atomic_occurs(A, I).
+o(A, I) :- occurs(A, I).
+			
+
+
+
+
+

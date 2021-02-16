@@ -1,0 +1,41 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 1:
+% Husband and I entered the restaurant. 
+% We were seated at a booth with wooden partitions.
+% Waiter provided sausage and meats on the table.
+% We study the menu. We order the escargot.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(r).
+
+person(h).
+person(me).
+customer(we).
+member(h, we).
+member(me, we).
+
+food(sausages_cutmeat).
+food(escargot).
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..4).
+
+st_hpd(enter(we, r), true, 0).
+st_hpd(sit(we), true, 1).
+st_hpd(pick_up(we, m, t), true, 2).
+st_hpd(put_down(we, m, t), true, 3).
+st_hpd(order(we, escargot, w), true, 4).
+
+
+
+

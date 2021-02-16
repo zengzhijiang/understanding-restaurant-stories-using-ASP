@@ -1,0 +1,34 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 7:
+
+% The waiter brought his dinner. 
+% Haze eats eggs_and_livers, drinks coffee.
+% Haze pulled his money out. The waiter saw him but he would not come total the bill.
+% Haze add up the bill, then he pushed past him out of the car.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(r).
+customer(haze).
+
+food(eggs_and_livers).
+drink(coffee).
+
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..4).
+
+st_hpd(put_down(w, eggs_and_livers, t), true, 0).
+st_hpd(eat(haze, eggs_and_livers), true, 1).
+st_hpd(drink(haze, coffee), true, 2).
+st_hpd(pay(haze, b), true, 3).
+st_hpd(leave(haze), true, 4).

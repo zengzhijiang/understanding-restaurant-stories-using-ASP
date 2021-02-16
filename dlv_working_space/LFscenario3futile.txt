@@ -1,0 +1,40 @@
+% ------------------------------------------------------------------
+% Run with
+%    crmodels2 0 kb.txt LFscenario3futile.txt m_newTI.txt conn.txt | mkatoms
+% Notes: 
+%    hr.exe crashes 
+%
+% Instead, use:
+%    clingo.exe kb.txt LFscenario3futile.txt m_newTI_woDiag.txt diag3.txt conn.txt 0 | mkatoms
+% ------------------------------------------------------------------
+
+% SCENARIO 3 (FUTILE ACTIVITY):
+%
+% Nicole went to a vegetarian restaurant. 
+% She sat down and wanted to order lentil soup,
+% but it was not on the menu.
+
+% ============================================
+% Entities mentioned in the text.
+
+restaurant(veg_r).
+customer(nicole).
+food(lentil_soup).
+waiter(waitress).
+
+% ============================================
+% History information extracted from the text.
+
+% Observation: with such a history, Nicole does not put down the menu,
+% which may be fine because she may look for something else.
+
+story_step(0..3).
+
+st_hpd(enter(nicole, veg_r), true, 0).
+st_hpd(sit(nicole), true, 1).
+st_hpd(pick_up(nicole, m, t), true, 2).
+st_obs(available(lentil_soup, veg_r), false, 3).
+
+% The next fact says that time steps 2 and 3 on the story time line
+% should be translated into consecutive steps on the reasoning time line.
+next_st(2, 3).

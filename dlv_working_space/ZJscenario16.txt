@@ -1,0 +1,31 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 16:
+% We arrived at Habibi restaurant, and sat down.
+% We ordered 2 glasses of water, and falafel_and_hummus.
+% Waiter bring the meal to table. 
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(habibi).
+customer(we).
+
+% drink(water).
+food(falafel_and_hummus).
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..3).
+
+st_hpd(enter(we, habibi), true, 0).
+st_hpd(sit(we), true, 1).
+% st_hpd(order_drink(we, water, w), true, 2).
+st_hpd(order(we, falafel_and_hummus, w), true, 2).
+st_hpd(put_down(w, falafel_and_hummus, t), true, 3).

@@ -1,0 +1,35 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 17:
+% virginia and cobb entered restaurant. Then they sat down.
+% cobb ordered oysters, dinner_salads, prime_rib for both people.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(r).
+customer(group).
+person(virginia).
+person(cobb).
+member(virginia, group).
+member(cobb, group).
+
+food(f).
+member(oysters, f).
+member(dinner_salads, f).
+member(prime_rib, f).
+
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..2).
+
+st_hpd(enter(group, r), true, 0).
+st_hpd(sit(group), true, 1).
+st_hpd(order(group, f, w), true, 2).

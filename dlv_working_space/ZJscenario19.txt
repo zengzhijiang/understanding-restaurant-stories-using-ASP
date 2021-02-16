@@ -1,0 +1,33 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 19:
+% jim entered the restaurant.
+% jim ordered yellow_rice_chicken and tea. 
+% waiter brings yellow_rice_chicken and tea.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(r).
+customer(jim).
+
+drink(tea).
+food(yellow_rice_chicken).
+
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..2).
+
+st_hpd(enter(jim, r), true, 0).
+st_hpd(order(jim, yellow_rice_chicken, w), true, 1).
+st_hpd(order_drink(jim, tea, w), true, 1).
+st_hpd(put_down(w, yellow_rice_chicken, t), true, 2).
+st_hpd(put_down(w, tea, t), true, 2).
+

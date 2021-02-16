@@ -1,0 +1,86 @@
+% ------------------------------------------------------------------
+% This module maps time steps on the story time line into
+% time steps on the reasoning time line.
+% ------------------------------------------------------------------
+
+% Each story step is mapped into exactly one reasoning time line step.
+% 1{map(S, I) : step(I)}1 :- story_step(S).
+
+map(S, I) | -map(S, I) :- story_step(S), step(I).
+%:- story_step(S), #count{I : map(S, I)} = N, N != 1.
+
+mapped(S) :- map(S, I).
+:- story_step(S), not mapped(S).
+
+-map(S, I1) :- map(S, I), step(I1), I1 != I.
+
+
+% Relative ordering of story time steps should be maintained on the
+% corresponding ordering of reasoning time steps.
+-map(S, I) :-
+	map(S1, I1),
+    S < S1,
+    I >= I1,
+	story_step(S),
+	step(I).
+
+% Predicates st_hpd and st_obs from the logic form translate
+% into predicates hpd and obs, based on the mapping between time points
+% on the story and reasoning time lines.
+%Daniela 04/26/18
+-atomic_action(A) :- member_action(A, A1).
+atomic_action(A) :- action(Ag, A), not -atomic_action(A).
+
+% more rules are needed here
+member_action(eat(C, F), eat(C, G)) :- customer(C), member(F, G).
+member_action(eat(C, F), eat(G, F)) :- food(F), member(C, G).
+
+hpd(A, V, I) :- 
+	st_hpd(A, V, S),
+	atomic_action(A),
+	map(S, I).
+	
+hpd(GA, V, I) :-
+	st_hpd(A, V, S),
+	member_action(A, GA),
+	map(S, I).
+%Daniela 04/26/18	
+	
+
+obs(F, V, I) :-
+	st_obs(F, V, S),
+	map(S, I).
+
+% last_assigned is the last time step on the reasoning time line
+% that has a story time step associated with it.
+-last_assigned(I) :-
+	map(S, J),
+	step(I),
+	step(J),
+	I < J.
+
+last_assigned(I) :-
+    map(S, I),
+	not -last_assigned(I).
+
+% We do not want gaps on the reasoning time line up until the 
+% last assigned step.	
+something_occurs(I) :- occurs(A, I).
+
+:- last_assigned(I),
+   step(J),
+   J < I,
+   not something_occurs(J).
+
+% ---------------------------
+% Heuristics
+
+% Predicate next_st(S, S1) indicates that story time steps S and S1
+% should be translated into consecutive time steps on the reasoning time line.
+% It remains to be seen whether this is a good rule; maybe reasoning time steps
+% when mental actions occur should be ignored here.
+% In the future, next_st may be replaced by a better predicate.
+map(S1, I1) :-
+	next_st(S, S1),
+	map(S, I),
+	next(I, I1).

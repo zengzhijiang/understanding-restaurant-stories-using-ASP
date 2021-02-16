@@ -1,0 +1,38 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 10:
+% 
+% The waiter brought out two plates of escargot.
+% One for Molly, one for me. We ate escagots.
+% Then waiter brought out a dozen oysters, and a dozen clams. We shared these.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(r).
+customer(we).
+person(molly).
+person(me).
+member(molly, we).
+member(me, we).
+
+food(f).
+member(escargot, f).
+member(oysters, f).
+member(clams, f).
+
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..1).
+
+st_hpd(put_down(w, f, t), true, 0).
+st_hpd(eat(we, f), true, 1).
+
+% order problem? waiter put down escargot first, then eat, then put down other things. 

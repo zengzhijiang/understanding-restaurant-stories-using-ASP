@@ -1,0 +1,35 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 6:
+% Samantha seat at a grand place.
+% Samantha had just started perusing the menu.
+% She ordered white_knight as drink.
+% She had decided on the barbecued veal chop with Asian slaw and Thai fried rice.
+% The waiter put down the wine.
+% She orders conch_chowder.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(r).
+customer(sam).
+
+food(f).
+member(white_knight, f).
+member(chop, f).
+member(conch_chowder, f).
+
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..1).
+
+
+st_hpd(sit(sam), true, 0).
+st_hpd(order(sam, f, w), true, 1).

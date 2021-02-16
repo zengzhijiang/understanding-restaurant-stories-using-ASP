@@ -1,0 +1,30 @@
+restaurant(r).
+
+customer(g).
+member(john, g).
+member(sam, g).
+member(sally, g).
+member(frank, g).
+member(jack, g).
+
+
+food(f).
+member(steak, f).
+member(rice, f).
+member(salad, f).
+member(burger, f).
+member(chicken, f).
+
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..4).
+
+
+st_hpd(greet(w, g), true, 0).
+st_hpd(sit(g), true, 1).
+st_hpd(order(g, f, w), true, 2).
+st_hpd(eat(g, f), true, 3).
+st_hpd(leave(g), true, 4).

@@ -1,0 +1,50 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 15:
+% Adam and Amelia both read menue carefully. 
+% Amelia ordered fish_chips_w_coleslaw to w1.
+% Adam ordered salmom_mp_w_salad to w1.
+% w2 brings bread and coffee to table.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(r).
+customer(they).
+person(adam).
+person(amelia).
+
+member(adam, they).
+member(amelia, they).
+
+food(bread).
+drink(coffee).
+
+food(f).
+member(fish_chips_w_coleslaw, f).
+member(salmom_mp_w_salad, f).
+
+waiter(w1).
+waiter(w2).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..3).
+
+st_obs(menu_read(they), true, 0).
+st_hpd(order(they, f, w1), true, 1).
+st_hpd(put_down(w2, bread, t), true, 2).
+st_hpd(put_down(w2, coffee, t), true, 3).
+
+
+
+% complex scenario, did not run for test
+% 1. muti people. muti dishes.
+% 2. two waiters occur.
+% 3. things on the house.
+% 4. drink

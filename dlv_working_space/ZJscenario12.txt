@@ -1,0 +1,37 @@
+% ------------------------------------------------------------------
+% This scenario does nor require diagnosis. 
+% Run with: 
+%    clingo kb.txt LFscenario1.txt m_newTI_woDiag.txt conn.txt | mkatoms
+% ------------------------------------------------------------------
+
+% Restaurant Story 12:
+% 
+% Sebastian entered the restaurant, and sat down opposite Andrew.
+% Andrew ordered a beer. 
+% Waiter brought the wine, and the drink.
+
+% ============================================
+% Entities mentioned in the text:
+
+restaurant(r).
+customer(group).
+person(sebastian).
+person(andrew).
+
+member(sebastian, group).
+member(andrew, group).
+
+food(beer).
+
+waiter(w).
+
+% ============================================
+% History information extracted from the text:
+
+story_step(0..1).
+
+st_hpd(order(group, beer, w), true, 0).
+st_hpd(put_down(w, beer, t), true, 1).
+st_hpd(eat(group, beer), true, 2).
+
+% drinks......
